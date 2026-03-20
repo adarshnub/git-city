@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Git City 🌆
+
+A 3D visualization platform that transforms GitHub repositories and activity into an interactive city experience. Built with Next.js, React Three Fiber, and Supabase.
+
+## Features
+
+- **3D City Visualization** - View GitHub activity as a virtual city with towers representing repositories
+- **Real-time Updates** - Live GitHub data visualization
+- **User Authentication** - Secure login via Supabase Auth (NextAuth.js)
+- **Interactive 3D Experience** - Explore your GitHub footprint in an immersive 3D environment
+- **Chat System** - Built-in community chat functionality
+
+## Tech Stack
+
+- **Frontend:** Next.js 16, React 19, TypeScript
+- **3D Rendering:** React Three Fiber, Three.js, @react-three/drei, @react-three/postprocessing
+- **Backend:** Supabase (PostgreSQL, Auth, Realtime)
+- **Styling:** Tailwind CSS 4
+- **State Management:** TanStack React Query
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- npm/yarn/pnpm/bun
+- Supabase account (for backend services)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/git-city.git
+cd git-city
+
+# Install dependencies
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
+
+### Environment Setup
+
+Copy the example environment file and configure your credentials:
+
+```bash
+cp .env.example .env
+```
+
+Configure the following variables in `.env`:
+
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# NextAuth
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+```
+
+### Database Setup
+
+Run the Supabase schema files in your Supabase dashboard:
+
+1. `supabase-schema.sql` - Main database schema
+2. `supabase-user-roles.sql` - User roles
+3. `supabase-chat-schema.sql` - Chat system schema
+
+### Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/            # Next.js App Router pages
+├── components/
+│   ├── auth/      # Authentication components
+│   ├── chat/      # Chat system
+│   ├── city/      # 3D city visualization
+│   ├── layout/    # Layout components
+│   ├── profile/   # User profile components
+│   ├── tower/     # 3D tower components
+│   └── ui/        # Reusable UI components
+├── hooks/         # Custom React hooks
+├── lib/           # Utility libraries
+├── types/         # TypeScript type definitions
+└── utils/         # Helper functions
+```
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT License - see LICENSE file for details.

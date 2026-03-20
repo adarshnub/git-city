@@ -9,6 +9,8 @@ declare module "next-auth" {
       totalCommits: number;
       towerTier: number;
       accessToken: string;
+      userRole: string;
+      editionNumber: number | null;
     } & DefaultSession["user"];
   }
 }

@@ -7,7 +7,8 @@ import { LOCATION_UPDATE_INTERVAL_MS } from "@/lib/constants";
 export function useNearbyUsers(
   latitude: number | null,
   longitude: number | null,
-  isSharing: boolean
+  isSharing: boolean,
+  radiusMeters?: number
 ) {
   const [nearbyUsers, setNearbyUsers] = useState<UserLocationData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -31,8 +32,9 @@ export function useNearbyUsers(
 
     setLoading(true);
     try {
+      const radiusParam = radiusMeters ? `&radius=${radiusMeters}` : "";
       const res = await fetch(
-        `/api/location/nearby?lat=${latitude}&lng=${longitude}`
+        `/api/location/nearby?lat=${latitude}&lng=${longitude}${radiusParam}`
       );
       const data = await res.json();
       setNearbyUsers(data);
@@ -41,7 +43,7 @@ export function useNearbyUsers(
     } finally {
       setLoading(false);
     }
-  }, [latitude, longitude]);
+  }, [latitude, longitude, radiusMeters]);
 
   useEffect(() => {
     if (!isSharing || !latitude || !longitude) return;

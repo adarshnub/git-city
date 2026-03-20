@@ -145,6 +145,14 @@ export const GITHUB_ACHIEVEMENTS = {
 
 export type AchievementKey = keyof typeof GITHUB_ACHIEVEMENTS;
 
-export const NEARBY_RADIUS_METERS = 5000;
+export const NEARBY_RADIUS_METERS = 50000; // 50km default
+export const NEARBY_RADIUS_OPTIONS = [
+  { label: "1 km", value: 1000 },
+  { label: "5 km", value: 5000 },
+  { label: "10 km", value: 10000 },
+  { label: "25 km", value: 25000 },
+  { label: "50 km", value: 50000 },
+  { label: "100 km", value: 100000 },
+];
 export const LOCATION_UPDATE_INTERVAL_MS = 30000;
 export const SYNC_COOLDOWN_HOURS = 24;

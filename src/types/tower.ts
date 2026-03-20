@@ -28,6 +28,8 @@ export interface TowerData {
   avatarUrl: string | null;
   totalCommits: number;
   towerTier: number;
+  userRole: string;
+  editionNumber: number | null;
   params: TowerParams;
   commitStats: {
     totalCommits: number;

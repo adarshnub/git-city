@@ -91,7 +91,7 @@ export default function CityScene({
           {children}
 
           {/* Post-processing for photorealistic quality */}
-          <EffectComposer multisampling={4}>
+          <EffectComposer multisampling={4} enableNormalPass>
             <Bloom
               intensity={0.6}
               luminanceThreshold={0.7}

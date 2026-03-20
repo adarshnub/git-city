@@ -90,6 +90,8 @@ export default function MessageBubble({ message, isOwn, isAdmin, onDelete }: Mes
               username={user.username}
               totalCommits={user.totalCommits}
               achievementCount={0}
+              userRole={user.userRole}
+              editionNumber={user.editionNumber}
               size="sm"
             />
           )}

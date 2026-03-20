@@ -10,11 +10,25 @@ export async function GET(
 ) {
   const { username } = await params;
 
-  const { data: user } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let user: Record<string, any> | null = null;
+
+  const { data: userData } = await supabase
     .from("users")
-    .select("id, username, display_name, avatar_url, total_commits, tower_tier")
+    .select("id, username, display_name, avatar_url, total_commits, tower_tier, user_role, edition_number")
     .eq("username", username)
     .single();
+  user = userData;
+
+  // Fallback if user_role column doesn't exist yet
+  if (!user) {
+    const { data: fallback } = await supabase
+      .from("users")
+      .select("id, username, display_name, avatar_url, total_commits, tower_tier")
+      .eq("username", username)
+      .single();
+    user = fallback;
+  }
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -48,6 +62,8 @@ export async function GET(
     avatarUrl: user.avatar_url,
     totalCommits: user.total_commits,
     towerTier: user.tower_tier,
+    userRole: user.user_role || "member",
+    editionNumber: user.edition_number || null,
     params: towerParams,
     commitStats: commitStats
       ? {

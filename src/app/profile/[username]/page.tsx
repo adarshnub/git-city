@@ -102,6 +102,8 @@ export default function ProfilePage() {
             params={towerData.params}
             username={towerData.username}
             totalCommits={towerData.totalCommits}
+            userRole={towerData.userRole}
+            editionNumber={towerData.editionNumber}
             showLabel={false}
           />
         </CityScene>
@@ -134,9 +136,36 @@ export default function ProfilePage() {
               />
             )}
             <div>
-              <h1 className="text-xl font-bold">
-                {towerData.displayName || towerData.username}
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold">
+                  {towerData.displayName || towerData.username}
+                </h1>
+                {towerData.userRole === "master" && (
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[10px] font-bold border"
+                    style={{
+                      color: "#ff4500",
+                      borderColor: "rgba(255,69,0,0.5)",
+                      background: "linear-gradient(135deg, rgba(255,69,0,0.2), rgba(255,165,0,0.15))",
+                      textShadow: "0 0 6px rgba(255,69,0,0.5)",
+                    }}
+                  >
+                    MASTER
+                  </span>
+                )}
+                {towerData.editionNumber != null && towerData.editionNumber > 0 && towerData.editionNumber <= 10 && (
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[10px] font-bold border"
+                    style={{
+                      color: "#ffd700",
+                      borderColor: "rgba(255,215,0,0.4)",
+                      background: "rgba(255,215,0,0.1)",
+                    }}
+                  >
+                    #{towerData.editionNumber}
+                  </span>
+                )}
+              </div>
               <p className="text-white/50">@{towerData.username}</p>
             </div>
           </div>

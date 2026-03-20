@@ -67,16 +67,30 @@ export const authOptions: NextAuthOptions = {
         token.accessToken = account.access_token;
 
         // Fetch user data from Supabase
+        let userData: Record<string, unknown> | null = null;
         const { data: user } = await supabase
           .from("users")
-          .select("id, total_commits, tower_tier")
+          .select("id, total_commits, tower_tier, user_role, edition_number")
           .eq("github_id", githubProfile.id)
           .single();
+        userData = user;
 
-        if (user) {
-          token.dbId = user.id;
-          token.totalCommits = user.total_commits;
-          token.towerTier = user.tower_tier;
+        // Fallback if role columns don't exist yet
+        if (!userData) {
+          const { data: fallback } = await supabase
+            .from("users")
+            .select("id, total_commits, tower_tier")
+            .eq("github_id", githubProfile.id)
+            .single();
+          userData = fallback;
+        }
+
+        if (userData) {
+          token.dbId = userData.id;
+          token.totalCommits = userData.total_commits;
+          token.towerTier = userData.tower_tier;
+          token.userRole = (userData.user_role as string) || "member";
+          token.editionNumber = (userData.edition_number as number) ?? null;
         }
       }
       return token;
@@ -90,6 +104,8 @@ export const authOptions: NextAuthOptions = {
         totalCommits: (token.totalCommits as number) ?? 0,
         towerTier: (token.towerTier as number) ?? 0,
         accessToken: token.accessToken as string,
+        userRole: (token.userRole as string) ?? "member",
+        editionNumber: (token.editionNumber as number) ?? null,
       };
       return session;
     },

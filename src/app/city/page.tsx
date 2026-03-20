@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { useNearbyUsers } from "@/hooks/useNearbyUsers";
-import { geoToScenePosition } from "@/lib/geolocation";
+import { geoToScenePosition, latLngToGlobePosition } from "@/lib/geolocation";
 import { calculateTowerParams } from "@/lib/tower-calculator";
 import { TowerData } from "@/types/tower";
+import { NEARBY_RADIUS_OPTIONS } from "@/lib/constants";
 import ChatPanel from "@/components/chat/ChatPanel";
 
 const CityScene = dynamic(() => import("@/components/city/CityScene"), {
@@ -17,6 +18,10 @@ const CityScene = dynamic(() => import("@/components/city/CityScene"), {
 const Tower = dynamic(() => import("@/components/tower/Tower"), {
   ssr: false,
 });
+const GlobePositionedTower = dynamic(
+  () => import("@/components/city/GlobePositionedTower"),
+  { ssr: false }
+);
 
 export default function CityPage() {
   const { data: session, status } = useSession();
@@ -24,11 +29,13 @@ export default function CityPage() {
   const [isSharing, setIsSharing] = useState(false);
   const [myTowerData, setMyTowerData] = useState<TowerData | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const [radius, setRadius] = useState(50000);
   const geo = useGeolocation();
   const { nearbyUsers, loading: nearbyLoading } = useNearbyUsers(
     geo.latitude,
     geo.longitude,
-    isSharing
+    isSharing,
+    radius
   );
 
   useEffect(() => {
@@ -45,6 +52,16 @@ export default function CityPage() {
       .then((data) => setMyTowerData(data))
       .catch(() => {});
   }, [session?.user?.username]);
+
+  // Dynamically compute scale so all nearby towers fit within scene bounds at ground level
+  const sceneScale = useMemo(() => {
+    if (!nearbyUsers.length) return 0.05;
+    const maxDist = Math.max(...nearbyUsers.map((u) => u.distance));
+    if (maxDist <= 0) return 0.05;
+    const targetSceneRadius = 30;
+    const scale = targetSceneRadius / maxDist;
+    return Math.min(Math.max(scale, 0.0001), 0.1);
+  }, [nearbyUsers]);
 
   const handleEnableSharing = () => {
     geo.requestLocation();
@@ -121,35 +138,57 @@ export default function CityPage() {
             position={[0, 0, 0]}
             username={myTowerData.username}
             totalCommits={myTowerData.totalCommits}
+            userRole={myTowerData.userRole}
+            editionNumber={myTowerData.editionNumber}
             onClick={() => router.push(`/profile/${myTowerData.username}`)}
           />
         )}
 
-        {/* Nearby users' towers */}
+        {/* Nearby users' towers — positioned on globe surface when zoomed out */}
         {nearbyUsers.map((user) => {
-          const pos = geo.latitude && geo.longitude
+          // Flat position for ground-level view
+          const flatPos = geo.latitude && geo.longitude
             ? geoToScenePosition(
                 user.latitude,
                 user.longitude,
                 geo.latitude,
                 geo.longitude,
-                0.05
+                sceneScale
               )
             : { x: 0, z: 0 };
+          const flatPosition: [number, number, number] = [
+            Math.max(-40, Math.min(40, flatPos.x)),
+            0,
+            Math.max(-40, Math.min(40, flatPos.z)),
+          ];
 
-          const clampedX = Math.max(-40, Math.min(40, pos.x));
-          const clampedZ = Math.max(-40, Math.min(40, pos.z));
-          const towerParams = calculateTowerParams(user.totalCommits);
+          // Globe surface position for Earth-level view
+          const globePosition: [number, number, number] =
+            geo.latitude && geo.longitude
+              ? latLngToGlobePosition(
+                  user.latitude,
+                  user.longitude,
+                  geo.latitude,
+                  geo.longitude
+                )
+              : [0, 0, 0];
+
+          const commits = user.totalCommits || 0;
+          const towerParams = calculateTowerParams(commits);
 
           return (
-            <Tower
+            <GlobePositionedTower
               key={user.userId}
-              params={towerParams}
-              position={[clampedX, 0, clampedZ]}
-              username={user.username}
-              totalCommits={user.totalCommits}
-              onClick={() => router.push(`/profile/${user.username}`)}
-            />
+              flatPosition={flatPosition}
+              globePosition={globePosition}
+            >
+              <Tower
+                params={towerParams}
+                username={user.username}
+                totalCommits={commits}
+                onClick={() => router.push(`/profile/${user.username}`)}
+              />
+            </GlobePositionedTower>
           );
         })}
       </CityScene>
@@ -163,6 +202,26 @@ export default function CityPage() {
               ? "Scanning..."
               : `${nearbyUsers.length} developer${nearbyUsers.length !== 1 ? "s" : ""} nearby`}
           </span>
+        </div>
+      </div>
+
+      {/* Radius selector */}
+      <div className="absolute top-16 left-4 rounded-xl bg-black/60 backdrop-blur-sm border border-white/10 px-4 py-3">
+        <p className="text-[10px] text-white/40 uppercase mb-2">Search Radius</p>
+        <div className="flex flex-wrap gap-1.5">
+          {NEARBY_RADIUS_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setRadius(opt.value)}
+              className={`rounded-md px-2 py-1 text-xs transition-colors ${
+                radius === opt.value
+                  ? "bg-cyan-500/30 text-cyan-300 border border-cyan-500/50"
+                  : "bg-white/5 text-white/50 border border-white/10 hover:bg-white/10"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -209,7 +268,10 @@ export default function CityPage() {
                   </p>
                   <p className="text-xs text-white/40">
                     {user.totalCommits.toLocaleString()} commits &middot;{" "}
-                    {Math.round(user.distance)}m away
+                    {user.distance >= 1000
+                      ? `${(user.distance / 1000).toFixed(1)}km`
+                      : `${Math.round(user.distance)}m`}{" "}
+                    away
                   </p>
                 </div>
               </button>

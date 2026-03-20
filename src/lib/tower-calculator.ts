@@ -18,16 +18,26 @@ export function calculateTowerParams(
   const tierConfig = TOWER_TIERS[tier];
 
   // Logarithmic height: 1 commit = 0, 10 = 10, 100 = 20, 1000 = 30, 10000 = 40
-  const height = totalCommits > 0 ? Math.log10(totalCommits) * 10 : 2;
+  const baseHeight = totalCommits > 0 ? Math.log10(totalCommits) * 10 : 2;
 
-  // Width scales slightly with tier
-  const width = 2 + tier * 0.5;
+  // Achievement height bonus: each achievement adds 5% height + 1 unit per tier
+  const achievementHeightBonus = achievements.reduce(
+    (sum, a) => sum + 1 + (a.tier - 1) * 0.5,
+    0
+  );
+  const height = baseHeight + achievementHeightBonus;
+
+  // Width scales slightly with tier + minor achievement boost
+  const width = 2 + tier * 0.5 + Math.min(achievements.length * 0.1, 0.5);
 
   // Floors based on height
   const floors = Math.max(1, Math.floor(height / 2));
 
-  // Achievement buffs: each achievement adds a small glow boost
-  const achievementGlowBoost = achievements.length * 0.05;
+  // Achievement buffs: each achievement adds glow boost, scaled by tier
+  const achievementGlowBoost = achievements.reduce(
+    (sum, a) => sum + 0.05 * a.tier,
+    0
+  );
 
   return {
     tier,

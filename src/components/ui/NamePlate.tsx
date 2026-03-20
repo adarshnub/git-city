@@ -9,6 +9,7 @@ interface NamePlateProps {
   achievementCount?: number;
   avatarUrl?: string | null;
   editionNumber?: number | null; // 1-10 for first users
+  userRole?: string; // "master" | "member"
   size?: "sm" | "md" | "lg";
   onClick?: () => void;
 }
@@ -35,6 +36,7 @@ export default function NamePlate({
   achievementCount = 0,
   avatarUrl,
   editionNumber,
+  userRole,
   size = "md",
   onClick,
 }: NamePlateProps) {
@@ -151,6 +153,21 @@ export default function NamePlate({
             <span className={`${s.text} font-semibold text-white`}>
               {username}
             </span>
+
+            {/* Master badge */}
+            {userRole === "master" && (
+              <span
+                className={`${s.badge} rounded-full font-bold border`}
+                style={{
+                  color: "#ff4500",
+                  borderColor: "rgba(255,69,0,0.5)",
+                  background: "linear-gradient(135deg, rgba(255,69,0,0.2), rgba(255,165,0,0.15))",
+                  textShadow: "0 0 6px rgba(255,69,0,0.5)",
+                }}
+              >
+                MASTER
+              </span>
+            )}
 
             {/* Edition badge for first 10 */}
             {effectiveEdition != null && effectiveEdition > 0 && effectiveEdition <= 10 && (

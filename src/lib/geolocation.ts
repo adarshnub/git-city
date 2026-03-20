@@ -45,6 +45,43 @@ export function geoToScenePosition(
   return { x: dx, z: -dz }; // Negate z because Three.js z-axis points toward camera
 }
 
+// Compute bearing (angle) from point 1 to point 2 in radians
+export function computeBearing(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const dLng = toRad(lng2 - lng1);
+  const y = Math.sin(dLng) * Math.cos(toRad(lat2));
+  const x =
+    Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+    Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(dLng);
+  return Math.atan2(y, x);
+}
+
+// Convert a lat/lng to a 3D position on the Earth globe surface.
+// The globe is centered at [0, -earthRadius - 0.5, 0] and rotated so
+// that centerLat/centerLng is at the very top (where the user's tower sits).
+export function latLngToGlobePosition(
+  lat: number,
+  lng: number,
+  centerLat: number,
+  centerLng: number,
+  earthRadius: number = 200
+): [number, number, number] {
+  const angDist = haversineDistance(centerLat, centerLng, lat, lng) / 6371000; // radians
+  const bearing = computeBearing(centerLat, centerLng, lat, lng);
+
+  // Position on sphere where the user is at the "north pole" (top)
+  const x = earthRadius * Math.sin(angDist) * Math.sin(bearing);
+  const y = earthRadius * Math.cos(angDist);
+  const z = -earthRadius * Math.sin(angDist) * Math.cos(bearing);
+
+  // Offset by Earth center position [0, -earthRadius - 0.5, 0]
+  return [x, y - earthRadius - 0.5, z];
+}
+
 // Generate a simple geohash (5 characters ~ 5km precision)
 export function encodeGeohash(lat: number, lng: number, precision: number = 5): string {
   const BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz";

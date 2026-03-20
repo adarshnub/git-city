@@ -10,19 +10,25 @@ export async function GET(request: NextRequest) {
   const after = searchParams.get("after");
   const limit = Math.min(Number(searchParams.get("limit")) || 50, 100);
 
+  // Try with role columns first, fall back without them if columns don't exist yet
+  let data: Record<string, unknown>[] | null = null;
+  let error: { message: string; code?: string } | null = null;
+
+  const baseFields = `
+    id,
+    content,
+    type,
+    metadata,
+    file_url,
+    file_name,
+    created_at,
+    channel,
+    user_id`;
+
   let query = supabase
     .from("messages")
-    .select(`
-      id,
-      content,
-      type,
-      metadata,
-      file_url,
-      file_name,
-      created_at,
-      channel,
-      user_id,
-      users!inner(id, username, display_name, avatar_url, total_commits, tower_tier)
+    .select(`${baseFields},
+      users!inner(id, username, display_name, avatar_url, total_commits, tower_tier, user_role, edition_number)
     `)
     .eq("channel", channel)
     .order("created_at", { ascending: false })
@@ -32,7 +38,29 @@ export async function GET(request: NextRequest) {
     query = query.gt("created_at", after);
   }
 
-  const { data, error } = await query;
+  const result = await query;
+  data = result.data;
+  error = result.error;
+
+  // Fallback: if user_role column doesn't exist yet, query without it
+  if (error && error.message?.includes("user_role")) {
+    let fallbackQuery = supabase
+      .from("messages")
+      .select(`${baseFields},
+        users!inner(id, username, display_name, avatar_url, total_commits, tower_tier)
+      `)
+      .eq("channel", channel)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (after) {
+      fallbackQuery = fallbackQuery.gt("created_at", after);
+    }
+
+    const fallbackResult = await fallbackQuery;
+    data = fallbackResult.data;
+    error = fallbackResult.error;
+  }
 
   if (error) {
     console.error("[CHAT] Fetch messages error:", error);
@@ -59,6 +87,8 @@ export async function GET(request: NextRequest) {
             avatarUrl: user.avatar_url,
             totalCommits: user.total_commits || 0,
             towerTier: user.tower_tier || 0,
+            userRole: user.user_role || "member",
+            editionNumber: user.edition_number || null,
           }
         : null,
     };
@@ -117,7 +147,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Message ID required" }, { status: 400 });
   }
 
-  const isAdmin = process.env.NEXT_PUBLIC_IS_ADMIN === "true";
+  const isAdmin = process.env.NEXT_PUBLIC_IS_ADMIN === "true" || session.user.userRole === "master";
 
   // Fetch message to check ownership
   const { data: msg, error: fetchErr } = await supabase

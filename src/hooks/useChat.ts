@@ -18,6 +18,8 @@ export interface ChatMessage {
     avatarUrl: string | null;
     totalCommits: number;
     towerTier: number;
+    userRole: string;
+    editionNumber: number | null;
   } | null;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { TowerData } from "@/types/tower";
@@ -22,6 +22,20 @@ export default function ProfilePage() {
   const [towerData, setTowerData] = useState<TowerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const geoRequested = useRef(false);
+
+  // Silently try to get geolocation for globe positioning (no prompt if denied)
+  useEffect(() => {
+    if (geoRequested.current) return;
+    geoRequested.current = true;
+    if (typeof navigator !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setGeoCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {} // silently ignore errors
+      );
+    }
+  }, []);
 
   useEffect(() => {
     if (!username) return;
@@ -81,6 +95,8 @@ export default function ProfilePage() {
           autoRotate
           showGround
           showEarth
+          userLat={geoCoords?.lat ?? null}
+          userLng={geoCoords?.lng ?? null}
         >
           <Tower
             params={towerData.params}

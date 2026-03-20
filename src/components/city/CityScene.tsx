@@ -25,6 +25,8 @@ interface CitySceneProps {
   showGround?: boolean;
   autoRotate?: boolean;
   showEarth?: boolean;
+  userLat?: number | null;
+  userLng?: number | null;
 }
 
 export default function CityScene({
@@ -33,6 +35,8 @@ export default function CityScene({
   showGround = true,
   autoRotate = false,
   showEarth = true,
+  userLat = null,
+  userLng = null,
 }: CitySceneProps) {
   return (
     <div className="canvas-container h-full w-full">
@@ -68,7 +72,7 @@ export default function CityScene({
           <CityLighting />
 
           {/* Earth globe (visible when zoomed out) */}
-          {showEarth && <EarthGlobe />}
+          {showEarth && <EarthGlobe userLat={userLat} userLng={userLng} />}
 
           {/* Ground landscape */}
           {showGround && <CityLandscape />}

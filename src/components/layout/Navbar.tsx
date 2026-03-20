@@ -41,6 +41,12 @@ export default function Navbar() {
               >
                 City View
               </Link>
+              <Link
+                href="/chat"
+                className="text-sm text-white/60 hover:text-white transition-colors"
+              >
+                Chat
+              </Link>
             </div>
           )}
         </div>

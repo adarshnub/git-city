@@ -9,6 +9,7 @@ import { useNearbyUsers } from "@/hooks/useNearbyUsers";
 import { geoToScenePosition } from "@/lib/geolocation";
 import { calculateTowerParams } from "@/lib/tower-calculator";
 import { TowerData } from "@/types/tower";
+import ChatPanel from "@/components/chat/ChatPanel";
 
 const CityScene = dynamic(() => import("@/components/city/CityScene"), {
   ssr: false,
@@ -22,6 +23,7 @@ export default function CityPage() {
   const router = useRouter();
   const [isSharing, setIsSharing] = useState(false);
   const [myTowerData, setMyTowerData] = useState<TowerData | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
   const geo = useGeolocation();
   const { nearbyUsers, loading: nearbyLoading } = useNearbyUsers(
     geo.latitude,
@@ -108,10 +110,10 @@ export default function CityPage() {
     );
   }
 
-  // City view with 3D scene
+  // City view with 3D scene + chat
   return (
     <div className="relative h-[calc(100vh-4rem)]">
-      <CityScene cameraPosition={[20, 25, 30]} showGround autoRotate={false}>
+      <CityScene cameraPosition={[20, 25, 30]} showGround autoRotate={false} showEarth userLat={geo.latitude} userLng={geo.longitude}>
         {/* My tower at center */}
         {myTowerData && (
           <Tower
@@ -135,10 +137,8 @@ export default function CityPage() {
               )
             : { x: 0, z: 0 };
 
-          // Clamp positions to reasonable range
           const clampedX = Math.max(-40, Math.min(40, pos.x));
           const clampedZ = Math.max(-40, Math.min(40, pos.z));
-
           const towerParams = calculateTowerParams(user.totalCommits);
 
           return (
@@ -164,6 +164,23 @@ export default function CityPage() {
               : `${nearbyUsers.length} developer${nearbyUsers.length !== 1 ? "s" : ""} nearby`}
           </span>
         </div>
+      </div>
+
+      {/* Chat panel - floating */}
+      <div className="absolute bottom-4 right-4 z-50">
+        {chatOpen ? (
+          <ChatPanel
+            channel="global"
+            className="w-96 h-[500px]"
+            onToggle={() => setChatOpen(false)}
+          />
+        ) : (
+          <ChatPanel
+            channel="global"
+            collapsed
+            onToggle={() => setChatOpen(true)}
+          />
+        )}
       </div>
 
       {/* Nearby Users List */}

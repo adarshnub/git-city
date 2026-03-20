@@ -3,6 +3,7 @@ import GithubProvider from "next-auth/providers/github";
 import { supabase } from "./supabase";
 
 export const authOptions: NextAuthOptions = {
+  debug: true,
   providers: [
     GithubProvider({
       clientId: process.env.GITHUB_ID!,
@@ -16,6 +17,11 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ account, profile }) {
+      console.log("[AUTH] signIn callback triggered", {
+        provider: account?.provider,
+        username: (profile as { login?: string })?.login,
+        hasAccessToken: !!account?.access_token,
+      });
       if (account?.provider === "github" && profile) {
         const githubProfile = profile as {
           id: number;
@@ -27,7 +33,7 @@ export const authOptions: NextAuthOptions = {
         };
 
         // Upsert user in Supabase
-        await supabase.from("users").upsert(
+        const { error } = await supabase.from("users").upsert(
           {
             github_id: githubProfile.id,
             username: githubProfile.login,
@@ -39,10 +45,21 @@ export const authOptions: NextAuthOptions = {
           },
           { onConflict: "github_id" }
         );
+
+        if (error) {
+          console.error("[AUTH] Supabase upsert error:", error);
+        } else {
+          console.log("[AUTH] Supabase upsert success for:", githubProfile.login);
+        }
       }
       return true;
     },
     async jwt({ token, account, profile }) {
+      console.log("[AUTH] jwt callback", {
+        hasAccount: !!account,
+        hasProfile: !!profile,
+        tokenUsername: token.username,
+      });
       if (account && profile) {
         const githubProfile = profile as { id: number; login: string };
         token.username = githubProfile.login;

@@ -80,6 +80,7 @@ export default function ProfilePage() {
           ]}
           autoRotate
           showGround
+          showEarth
         >
           <Tower
             params={towerData.params}
@@ -93,6 +94,13 @@ export default function ProfilePage() {
         <div className="absolute bottom-4 left-4 rounded-xl bg-black/60 backdrop-blur-sm px-4 py-2 border border-white/10">
           <span className="text-sm font-semibold" style={{ color: tierConfig.colorPrimary }}>
             {tierConfig.name}
+          </span>
+        </div>
+
+        {/* Zoom hint */}
+        <div className="absolute bottom-4 right-4 rounded-xl bg-black/40 backdrop-blur-sm px-3 py-1.5 border border-white/5">
+          <span className="text-[10px] text-white/30">
+            Scroll to zoom · See Earth view
           </span>
         </div>
       </div>

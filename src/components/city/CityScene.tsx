@@ -6,7 +6,7 @@ import {
   OrbitControls,
   Environment,
   ContactShadows,
-  Sky,
+  Stars,
 } from "@react-three/drei";
 import {
   EffectComposer,
@@ -15,14 +15,16 @@ import {
   ToneMapping,
 } from "@react-three/postprocessing";
 import { ToneMappingMode } from "postprocessing";
-import CityGround from "./CityGround";
+import CityLandscape from "./CityLandscape";
 import CityLighting from "./CityLighting";
+import EarthGlobe from "./EarthGlobe";
 
 interface CitySceneProps {
   children: React.ReactNode;
   cameraPosition?: [number, number, number];
   showGround?: boolean;
   autoRotate?: boolean;
+  showEarth?: boolean;
 }
 
 export default function CityScene({
@@ -30,12 +32,13 @@ export default function CityScene({
   cameraPosition = [15, 20, 25],
   showGround = true,
   autoRotate = false,
+  showEarth = true,
 }: CitySceneProps) {
   return (
     <div className="canvas-container h-full w-full">
       <Canvas
         shadows
-        camera={{ position: cameraPosition, fov: 50, near: 0.1, far: 500 }}
+        camera={{ position: cameraPosition, fov: 50, near: 0.1, far: 1500 }}
         gl={{
           antialias: true,
           alpha: false,
@@ -44,26 +47,31 @@ export default function CityScene({
         }}
         dpr={[1, 2]}
       >
-        <color attach="background" args={["#070b14"]} />
+        <color attach="background" args={["#030508"]} />
 
         <Suspense fallback={null}>
           {/* HDRI environment for realistic reflections */}
           <Environment preset="city" background={false} />
 
-          {/* Sky with stars */}
-          <Sky
-            distance={450000}
-            sunPosition={[5, 1, 8]}
-            inclination={0}
-            azimuth={0.25}
-            rayleigh={0.5}
+          {/* Star field (visible when zoomed out) */}
+          <Stars
+            radius={400}
+            depth={100}
+            count={3000}
+            factor={3}
+            saturation={0.2}
+            fade
+            speed={0.5}
           />
 
           {/* Lighting */}
           <CityLighting />
 
-          {/* Ground */}
-          {showGround && <CityGround />}
+          {/* Earth globe (visible when zoomed out) */}
+          {showEarth && <EarthGlobe />}
+
+          {/* Ground landscape */}
+          {showGround && <CityLandscape />}
 
           {/* Contact shadows beneath towers */}
           <ContactShadows
@@ -81,8 +89,8 @@ export default function CityScene({
           {/* Post-processing for photorealistic quality */}
           <EffectComposer multisampling={4}>
             <Bloom
-              intensity={0.5}
-              luminanceThreshold={0.8}
+              intensity={0.6}
+              luminanceThreshold={0.7}
               luminanceSmoothing={0.3}
               mipmapBlur
             />
@@ -96,16 +104,17 @@ export default function CityScene({
           </EffectComposer>
         </Suspense>
 
-        {/* Camera controls */}
+        {/* Camera controls - extended range for Earth zoom */}
         <OrbitControls
           makeDefault
           autoRotate={autoRotate}
           autoRotateSpeed={0.5}
-          maxPolarAngle={Math.PI / 2.1}
-          minDistance={5}
-          maxDistance={100}
+          maxPolarAngle={Math.PI / 2.05}
+          minDistance={3}
+          maxDistance={500}
           enableDamping
           dampingFactor={0.05}
+          zoomSpeed={1.2}
         />
       </Canvas>
     </div>
